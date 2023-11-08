@@ -1,0 +1,38 @@
+  GNU nano 4.8                       script.sh                                  
+!/bin/bash
+
+# saves all logs to one file for documentation
+tail -n 100 /var/log/apache2/access.log >> /home/user/Desktop/tester
+
+# sends logs to a file that the script uses to count lines with the HTTP code
+# change -n int based on expected traffic
+tail -n 100 /var/log/apache2/access.log | grep -E " 400 | 401 | 404 | 500  " | >
+
+# array for doing the counting of errors in the logs
+status_codes=("400" "401" "404" "500")
+
+declare -A counts
+
+for code in "${status_codes[@]}"; do
+        counts["$code"]=0
+done
+
+# array and loop for counting
+for code in "${status_codes[@]}"; do
+    count=$(grep -o " $code " "/home/user/Desktop/parse" | wc -l)
+    counts["$code"]=$count
+
+# sends email to log manager if status counts reaches threshold
+        if ["$code" == "401"] && [$count -ge 20 ]; then
+
+                 mail -s "High number of failed logins have been detected" fake_email@gmail.com
+        fi
+done
+# Sends email for other codes
+        if ["$code" != "401"] && [$count -ge 20]; then
+
+                mail -s "High number of other error code detected" fake_email@gmail.com
+        fi
+for code in "${status_codes[@]}"; do
+    echo "Occurrences of error codes $code: ${counts[$code]}"
+done
